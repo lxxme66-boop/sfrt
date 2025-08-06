@@ -4,6 +4,90 @@ RAFT is a recipe to adapting LLMs to domain-specific RAG. You can learn more in 
 
 This enhanced version (v4) focuses on **generating high-quality question-answer pairs** through multi-stage quality control and validation processes, specifically optimized for semiconductor display domain knowledge.
 
+## 🆕 Local LLM Support (No API Key Required!)
+
+### Run RAFT with Local Models using vLLM
+
+You can now run RAFT using local large language models without any API keys! This version supports popular open-source models like Qwen, Llama, and others through vLLM.
+
+#### Quick Start with Local Models
+
+1. **Install vLLM** (if not already installed):
+```bash
+pip install vllm
+```
+
+2. **Run with default settings**:
+```bash
+# Linux/Mac
+bash raft_local.sh
+
+# Windows
+raft_local_run.bat
+```
+
+3. **Custom usage**:
+```bash
+python raft_local_llm.py \
+  --datapath data/your_document.pdf \
+  --output outputs_local \
+  --model-name qwq_32 \
+  --embedding-model BAAI/bge-large-zh-v1.5 \
+  --questions 5 \
+  --distractors 3
+```
+
+#### Supported Local Models
+
+| Model Name | Description | Model Path |
+|------------|-------------|------------|
+| `qwq_32` | QwQ 32B (Default) | `/mnt/workspace/models/Qwen/QwQ-32B/` |
+| `qw2_72` | Qwen2 72B Instruct | `/data/lc/openmodels/qw2_72b_instruct` |
+| `qw2.5_32` | Qwen2.5 32B | `/data/lc/openmodels/qw2.5_32b_instruct` |
+| `qw2.5_72` | Qwen2.5 72B | `/data/lc/openmodels/qw2.5_72b_instruct` |
+| `llama3.1_70` | Llama 3.1 70B | `/data/lc/openmodels/llama3.1_70b_instruct` |
+
+#### Local Model Parameters
+
+- `--model-name`: Choose from supported models above
+- `--model-path`: Use custom model path (overrides model-name)
+- `--embedding-model`: HuggingFace embedding model (default: BAAI/bge-large-zh-v1.5)
+- `--gpu-memory-utilization`: GPU memory usage (0-1, default: 0.95)
+- `--tensor-parallel-size`: Number of GPUs for tensor parallelism (default: 1)
+- `--temperature`: Sampling temperature (default: 0.6)
+- `--top-p`: Top-p sampling (default: 0.95)
+- `--max-tokens`: Maximum tokens to generate (default: 4096)
+
+#### Examples
+
+**Process a single PDF with local model:**
+```bash
+python raft_local_llm.py \
+  --datapath data/paper.pdf \
+  --output outputs_local \
+  --model-name qw2.5_32 \
+  --questions 5 \
+  --chunk_size 512
+```
+
+**Batch process multiple documents:**
+```bash
+python raft_local_llm.py \
+  --datapath data/ \
+  --output outputs_batch \
+  --model-name qwq_32 \
+  --qa-threshold 100  # Stop after generating 100 QA pairs
+```
+
+**Use custom model path:**
+```bash
+python raft_local_llm.py \
+  --datapath data/document.txt \
+  --output outputs_custom \
+  --model-path /path/to/your/model \
+  --tensor-parallel-size 4  # Use 4 GPUs
+```
+
 ## 🆕 What's New in Enhanced Version v4
 
 ### Key Improvements
