@@ -1,0 +1,2 @@
+
+python -m utils.syndata_pipeline_v2 --data_dir "data" --chunks_path "outputs_chunks/article_chunks14.json" --chunk4_path "outputs_chunk4/article_chunk4_13.json" --topics_path "outputs_topics/article_topic14.json" --questions_path "outputs_questions/article_questions_with_topic14.json" --answers_path "outputs_answers/article_answers_14.json" --syndatas_path "outputs_syndatas/syndatas14.json" --start_idx 36 --end_idx 38
