@@ -59,8 +59,10 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--batch_size", type=int, default=32, help="批量推理大小")
     parser.add_argument("--use_vllm", action="store_true", help="使用vLLM进行高效推理")
     parser.add_argument("--model_name", type=str, default="qwq_32", help="使用的模型名称")
+    parser.add_argument("--model_path", type=str, default=None, help="模型路径（可选，覆盖默认路径）")
     parser.add_argument("--gpu_memory_utilization", type=float, default=0.95, help="GPU内存利用率")
     parser.add_argument("--tensor_parallel_size", type=int, default=4, help="张量并行大小")
+    parser.add_argument("--max_model_len", type=int, default=98304, help="最大模型长度（默认96K）")
     
     # 中间文件路径（用于增量处理）
     parser.add_argument("--judge_output_path", type=str, help="文档评估结果保存路径")
@@ -253,8 +255,13 @@ if __name__ == "__main__":
     model_config = {
         "model_name": args.model_name,
         "gpu_memory_utilization": args.gpu_memory_utilization,
-        "tensor_parallel_size": args.tensor_parallel_size
+        "tensor_parallel_size": args.tensor_parallel_size,
+        "max_model_len": args.max_model_len
     }
+    
+    # 如果提供了自定义模型路径，添加到配置中
+    if args.model_path:
+        model_config["model_path"] = args.model_path
     
     # 准备中间文件路径
     intermediate_paths = {
