@@ -1,8 +1,271 @@
-## RAFT
+# RAFT - Enhanced Version for High-Quality QA Pairs
 
-RAFT is a recipe to adapting LLMs to domain-specific RAG. You can learn more in our release-blogs [here](https://gorilla.cs.berkeley.edu/blogs/9_raft.html) and [here](https://techcommunity.microsoft.com/t5/ai-ai-platform-blog/bg-p/AIPlatformBlog). RAFT takes an input document from the user and creates a dataset using the document, consisting of synthetically generated `{ question, answer, documents }` triplets. The dataset can then be used to fine-tune models for improved question-answering and retrieval. 
+RAFT is a recipe to adapting LLMs to domain-specific RAG. You can learn more in our release-blogs [here](https://gorilla.cs.berkeley.edu/blogs/9_raft.html) and [here](https://techcommunity.microsoft.com/t5/ai-ai-platform-blog/bg-p/AIPlatformBlog). 
 
-The input data from the user can be either a general text document (pdf, json, or txt) for general QA or an API documentation in the API Zoo JSONL format for API calling. 
+This enhanced version (v4) focuses on **generating high-quality question-answer pairs** through multi-stage quality control and validation processes, specifically optimized for semiconductor display domain knowledge.
+
+## 🆕 What's New in Enhanced Version v4
+
+### Key Improvements
+- **📋 Document Quality Pre-filtering**: 4-dimensional scoring system to filter high-quality documents
+- **❓ Enhanced Question Generation**: Detailed prompt requirements with 7 specific guidelines  
+- **✅ Question Quality Validation**: Automatic validation of generated questions
+- **📊 Comprehensive Quality Assessment**: Multi-dimensional evaluation and comparison tools
+- **🔄 Flexible Pipeline Options**: Full/Fast/Compatible modes for different needs
+
+### Quality Control Pipeline
+```
+Raw Documents → Quality Filter → Chunking → Topic Extraction → 
+Enhanced Question Generation → Question Validation → Answer Generation → 
+Data Synthesis → Quality Evaluation
+```
+
+## 📦 Installation
+
+Dependencies can be installed using the following command: 
+
+```bash
+pip install -r requirements.txt
+```
+
+Additional dependencies for enhanced features:
+```bash
+pip install matplotlib seaborn pandas
+```
+
+## 🚀 Quick Start - Enhanced Pipeline v4
+
+### Method 1: Run Complete Enhanced Pipeline (Recommended)
+
+```bash
+# Run the enhanced pipeline with all quality controls
+bash utils/syndata_pipeline_v4.sh
+```
+
+This will run three modes:
+- **Complete Enhanced**: Full quality control (document filtering + question validation)
+- **Fast Mode**: Skip document filtering, keep question validation  
+- **Compatible Mode**: Skip all enhancements (compatible with v3)
+
+### Method 2: Manual Configuration
+
+```bash
+# Complete enhanced pipeline
+python -m utils.syndata_pipeline_v4 \
+  --data_dir "data" \
+  --filtered_data_dir "data_filtered" \
+  --chunks_path "outputs_enhanced/chunks/article_chunks_enhanced.json" \
+  --chunk4_path "outputs_enhanced/chunk4/article_chunk4_enhanced.json" \
+  --topics_path "outputs_enhanced/topics/article_topics_enhanced.json" \
+  --questions_path "outputs_enhanced/questions/article_questions_enhanced.json" \
+  --validated_questions_path "outputs_enhanced/validated_questions/article_questions_validated.json" \
+  --answers_path "outputs_enhanced/answers/article_answers_enhanced.json" \
+  --syndatas_path "outputs_enhanced/syndatas/syndatas_enhanced.json" \
+  --start_idx 0 \
+  --end_idx 10 \
+  --max_workers 4
+```
+
+### Method 3: Fast Mode (Skip Document Filtering)
+
+```bash
+python -m utils.syndata_pipeline_v4 \
+  --data_dir "data" \
+  --skip_document_filter \
+  --chunks_path "outputs_enhanced/chunks/article_chunks_fast.json" \
+  --validated_questions_path "outputs_enhanced/validated_questions/article_questions_fast_validated.json" \
+  --syndatas_path "outputs_enhanced/syndatas/syndatas_fast.json" \
+  --start_idx 0 \
+  --end_idx 10
+```
+
+## 🎯 Enhanced Features Detailed
+
+### 1. Document Quality Pre-filtering
+
+The system evaluates documents using 4 dimensions:
+- **Problem Completeness** (0-2 points): Clear problems with sufficient clues
+- **Technical Complexity** (0-2 points): Graduate level or above difficulty  
+- **Technical Accuracy** (-1 to 1 points): Correctness and precision
+- **Reasoning Capability** (-1 to 2 points): Logical reasoning and inference
+
+Only documents scoring >0 in all dimensions and ≥1 in reasoning are processed.
+
+### 2. Enhanced Question Generation
+
+Improved prompt with 7 specific requirements:
+- a) Focus on logical reasoning content from papers
+- b) Clear, comprehensive, and precise descriptions  
+- c) Avoid paper-specific terminology
+- d) No abbreviations in noun descriptions
+- e) Avoid specific examples from papers
+- f) Complete independence from paper content
+- g) Concise and refined questions
+
+### 3. Question Quality Validation
+
+Each generated question is validated against:
+- **Causality**: Complete technical logic chains
+- **Rigor**: Scientific reasoning processes
+- **Completeness**: Self-contained and comprehensive
+
+## 📊 Quality Evaluation
+
+### Automatic Quality Assessment
+
+```bash
+# Evaluate single dataset
+python enhanced_quality_evaluation.py --input outputs_enhanced/syndatas/syndatas_enhanced.json
+
+# Compare multiple datasets
+python enhanced_quality_evaluation.py --compare \
+  outputs_enhanced/syndatas/syndatas_enhanced.json \
+  outputs_enhanced/syndatas/syndatas_fast.json \
+  outputs_enhanced/syndatas/syndatas_compat.json
+
+# Evaluate with sampling (for large datasets)
+python enhanced_quality_evaluation.py --input your_dataset.json --sample_size 100
+```
+
+### Quality Dimensions Evaluated
+1. **Reasoning Chain Logic** (35% weight)
+2. **Technical Accuracy** (30% weight)  
+3. **Domain Depth** (20% weight)
+4. **Application Value** (15% weight)
+
+## 🔧 Configuration Options
+
+### Environment Variables
+```bash
+export CHUNK_NUM=4                    # Number of chunks to combine
+export CHUNK_NUM_MIN=2               # Minimum chunks required
+export NUM_distract=3                # Number of distractor documents
+export PROMPT_KEY="deepseek-v2"      # Prompt template key
+export COMPLETION_MODEL="deepseek-r1-250120"  # LLM model for generation
+export COMPLETION_OPENAI_BASE_URL="your_api_base_url"
+export COMPLETION_OPENAI_API_KEY="your_api_key"
+```
+
+### Pipeline Arguments
+- `--skip_document_filter`: Skip document quality filtering
+- `--skip_question_validation`: Skip question quality validation  
+- `--max_workers`: Number of concurrent workers
+- `--start_idx` / `--end_idx`: Document range to process
+
+## 📈 Performance Comparison
+
+| Pipeline Version | Document Filter | Question Validation | Expected Quality | Speed |
+|-----------------|----------------|-------------------|------------------|-------|
+| **Enhanced v4** | ✅ | ✅ | **Highest** | Slower |
+| **Fast Mode** | ❌ | ✅ | High | Medium |
+| **Compatible** | ❌ | ❌ | Standard | Fastest |
+| **Original v3** | ❌ | ❌ | Standard | Fastest |
+
+## 🎯 Best Practices
+
+### For High-Quality Results
+1. Use **Complete Enhanced Pipeline** for production data
+2. Set appropriate `start_idx` and `end_idx` for your document count
+3. Monitor quality evaluation scores and adjust if needed
+4. Use document filtering for large document collections
+
+### For Development/Testing  
+1. Use **Fast Mode** to skip document filtering
+2. Use smaller `end_idx` values for quick iterations
+3. Use **Compatible Mode** for baseline comparisons
+
+### For Large Scale Processing
+1. Increase `--max_workers` based on your hardware
+2. Use `--sample_size` in quality evaluation for faster assessment
+3. Process documents in batches using `start_idx`/`end_idx`
+
+## 🔍 Quality Metrics
+
+The enhanced pipeline tracks:
+- **Document Quality Rate**: Percentage of documents passing pre-filter
+- **Question Validation Rate**: Percentage of questions passing validation
+- **Overall Quality Score**: High/Medium/Low distribution
+- **Confidence Levels**: Assessment confidence distribution
+
+## 📁 Output Structure
+
+```
+outputs_enhanced/
+├── chunks/                    # Document chunks
+├── chunk4/                   # Combined chunks
+├── topics/                   # Extracted topics
+├── questions/                # Generated questions
+├── validated_questions/      # Quality-validated questions
+├── answers/                  # Generated answers
+└── syndatas/                 # Final training data
+    ├── syndatas_enhanced.json    # Complete enhanced pipeline
+    ├── syndatas_fast.json        # Fast mode output
+    └── syndatas_compat.json      # Compatible mode output
+```
+
+## 🤝 Legacy Compatibility
+
+The enhanced version maintains full compatibility with existing workflows:
+- Original RAFT pipeline still available via `raft.py`
+- Compatible mode produces identical results to v3
+- All original arguments and formats supported
+
+## 📚 Usage Examples
+
+### Example 1: Semiconductor Display Research Papers
+```bash
+# Process research papers with full quality control
+python -m utils.syndata_pipeline_v4 \
+  --data_dir "research_papers/" \
+  --syndatas_path "high_quality_qa_pairs.json" \
+  --start_idx 0 --end_idx 50
+```
+
+### Example 2: Technical Documentation  
+```bash
+# Fast processing for technical docs
+python -m utils.syndata_pipeline_v4 \
+  --data_dir "tech_docs/" \
+  --skip_document_filter \
+  --syndatas_path "tech_qa_pairs.json"
+```
+
+### Example 3: Quality Assessment
+```bash
+# Compare different processing methods
+python enhanced_quality_evaluation.py --compare \
+  high_quality_qa_pairs.json \
+  tech_qa_pairs.json \
+  --output_dir evaluation_results/
+```
+
+## 🔗 Integration with Fine-tuning
+
+The enhanced pipeline outputs are compatible with:
+- **HuggingFace Datasets**: Direct loading with `datasets.load_dataset()`
+- **OpenAI Fine-tuning**: Convert using `format.py`
+- **Azure AI Studio**: Follow existing fine-tuning guides
+- **Custom Training**: JSON format ready for any framework
+
+## 📊 Monitoring and Debugging
+
+### Log Levels
+- Set `logging.INFO` for progress tracking
+- Set `logging.DEBUG` for detailed question validation logs
+- Check pipeline timing statistics in output
+
+### Common Issues
+- **Empty output**: Check `start_idx`/`end_idx` range
+- **Low quality scores**: Verify document content quality
+- **API errors**: Confirm environment variables are set correctly
+
+---
+
+For detailed technical documentation of the original RAFT method, see the sections below.
+
+---
+
+# Original RAFT Documentation
 
 ## Dev environment with Codespaces
 
